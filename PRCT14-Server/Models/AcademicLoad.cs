@@ -20,4 +20,24 @@ public partial class AcademicLoad
     public virtual Discipline DisciplineCodeNavigation { get; set; } = null!;
 
     public virtual Teacher TeacherCodeNavigation { get; set; } = null!;
+
+    public AcademicLoad() { }
+
+    public AcademicLoad(AcademicLoadEditDTO value)
+    {        
+        TeacherCode = value.TeacherCode;
+        DisciplineCode = value.DisciplineCode;
+        Group = value.Group;
+        Semester = value.Semester;
+        NumberOfHours = value.NumberOfHours;
+    }
+    
+    public void Update(AcademicLoadEditDTO value)
+    {
+        TeacherCode = value.TeacherCode;
+        DisciplineCode = value.DisciplineCode;
+        Group = value.Group;
+        Semester = value.Semester;
+        NumberOfHours = value.NumberOfHours;
+    }
 }

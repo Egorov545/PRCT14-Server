@@ -9,11 +9,25 @@ using PRCT14_Server.Models;
 
 namespace PRCT14_Server.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
+
     public class AcademicLoadsController : ControllerBase
     {
         private readonly CollegeContext _context;
+
+        // GET: api/AcademicLoads/Info
+        [HttpGet("Info")]
+        public async Task<ActionResult<IEnumerable<AcademicLoadDTO>>> GetAcademicLoadInfoDTO()
+        {            
+            await _context.Teachers.LoadAsync();
+            await _context.Disciplines.LoadAsync();
+            
+            return await _context.AcademicLoads
+                .Select(p => new AcademicLoadDTO(p))
+                .ToListAsync();
+        }
 
         public AcademicLoadsController(CollegeContext context)
         {
@@ -41,17 +55,96 @@ namespace PRCT14_Server.Controllers
             return academicLoad;
         }
 
-        // PUT: api/AcademicLoads/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAcademicLoad(int id, AcademicLoad academicLoad)
-        {
-            if (id != academicLoad.AcademLoadCode)
+        //// PUT: api/AcademicLoads/5
+        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutAcademicLoad(int id, AcademicLoad academicLoad)
+        //{
+        //    if (id != academicLoad.AcademLoadCode)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    _context.Entry(academicLoad).State = EntityState.Modified;
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!AcademicLoadExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
+
+        //    return NoContent();
+        //}
+
+        //// POST: api/AcademicLoads
+        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //[HttpPost]
+        //public async Task<ActionResult<AcademicLoad>> PostAcademicLoad(AcademicLoad academicLoad)
+        //{
+        //    _context.AcademicLoads.Add(academicLoad);
+        //    await _context.SaveChangesAsync();
+
+        //    return CreatedAtAction("GetAcademicLoad", new { id = academicLoad.AcademLoadCode }, academicLoad);
+        //}       
+
+        // POST: api/AcademicLoads
+        [HttpPost]
+        public async Task<ActionResult<AcademicLoad>> PostAcademicLoad(AcademicLoadEditDTO academicLoadDTO)
+        {            
+            if (!_context.Teachers.Any(t => t.ServiceNumber == academicLoadDTO.TeacherCode))
             {
-                return BadRequest();
+                return BadRequest("Преподаватель не найден");
             }
 
-            _context.Entry(academicLoad).State = EntityState.Modified;
+            if (!_context.Disciplines.Any(d => d.DisciplineCode == academicLoadDTO.DisciplineCode))
+            {
+                return BadRequest("Дисциплина не найдена");
+            }
+            
+            AcademicLoad academicLoad = new AcademicLoad(academicLoadDTO);
+
+            _context.AcademicLoads.Add(academicLoad);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetAcademicLoad", new { id = academicLoad.AcademLoadCode }, academicLoad);
+        }
+
+        // PUT: api/AcademicLoads/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutAcademicLoad(int id, AcademicLoadEditDTO academicLoadDTO)
+        {
+            if (id != academicLoadDTO.AcademLoadCode)
+            {
+                return BadRequest("Неверный запрос!");
+            }
+            
+            var academicLoad = await _context.AcademicLoads.FindAsync(id);
+            if (academicLoad == null)
+            {
+                return NotFound($"Запись id={id} не обнаружена!");
+            }
+            
+            if (!_context.Teachers.Any(t => t.ServiceNumber == academicLoadDTO.TeacherCode))
+            {
+                return BadRequest("Преподаватель не найден");
+            }
+
+            if (!_context.Disciplines.Any(d => d.DisciplineCode == academicLoadDTO.DisciplineCode))
+            {
+                return BadRequest("Дисциплина не найдена");
+            }
+            
+            academicLoad.Update(academicLoadDTO);
 
             try
             {
@@ -61,7 +154,7 @@ namespace PRCT14_Server.Controllers
             {
                 if (!AcademicLoadExists(id))
                 {
-                    return NotFound();
+                    return NotFound($"Запись id={id} не обнаружена!");
                 }
                 else
                 {
@@ -71,17 +164,6 @@ namespace PRCT14_Server.Controllers
 
             return NoContent();
         }
-
-        // POST: api/AcademicLoads
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<AcademicLoad>> PostAcademicLoad(AcademicLoad academicLoad)
-        {
-            _context.AcademicLoads.Add(academicLoad);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetAcademicLoad", new { id = academicLoad.AcademLoadCode }, academicLoad);
-        }       
 
         // DELETE: api/AcademicLoads/5
         [HttpDelete("{id}")]
